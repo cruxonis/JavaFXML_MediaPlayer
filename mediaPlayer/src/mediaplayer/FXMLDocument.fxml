@@ -47,7 +47,7 @@
       </VBox>
    </bottom>
    <center>
-      <StackPane prefHeight="150.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+      <StackPane BorderPane.alignment="CENTER">
          <children>
             <MediaView fx:id="mediaView" fitHeight="200.0" fitWidth="200.0" />
             <Slider fx:id="seekSlider" max="300.0" StackPane.alignment="BOTTOM_CENTER" />

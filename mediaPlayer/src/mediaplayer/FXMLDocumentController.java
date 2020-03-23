@@ -18,13 +18,16 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaPlayer.Status;
 import javafx.scene.media.MediaView;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
 /**
@@ -42,6 +45,7 @@ public class FXMLDocumentController implements Initializable {
     private Slider slider;
     @FXML
     private Slider seekSlider;
+    Status status= Status.STOPPED;
     
     
     
@@ -55,11 +59,16 @@ public class FXMLDocumentController implements Initializable {
             File file = fileChooser.showOpenDialog(null);
             filePath = file.toURI().toString();
             
-            
+           switch(status) {
+               case STOPPED:
             if (filePath != null) {
+            
             Media media = new Media(filePath);
+            
             mediaPlayer = new MediaPlayer(media);
+            
             mediaView.setMediaPlayer(mediaPlayer);
+            
             DoubleProperty width = mediaView.fitWidthProperty();
             DoubleProperty height = mediaView.fitHeightProperty();
             
@@ -100,15 +109,66 @@ public class FXMLDocumentController implements Initializable {
                     
                 }
             });
-                
-                
                 mediaPlayer.play();
-                
-                
+                status=Status.PLAYING;
+                break;        
         }
+               case PLAYING:
+                   mediaPlayer.stop();
+                   if (filePath != null) {
+            
+            Media media = new Media(filePath);
+            
+            mediaPlayer = new MediaPlayer(media);
+            
+            mediaView.setMediaPlayer(mediaPlayer);
+            
+            DoubleProperty width = mediaView.fitWidthProperty();
+            DoubleProperty height = mediaView.fitHeightProperty();
+            
+            
+            width.bind(Bindings.selectDouble(mediaView.sceneProperty(), "width"));
+            height.bind(Bindings.selectDouble(mediaView.sceneProperty(), "height"));
+            
+            
+            slider.setValue(mediaPlayer.getVolume()* 100);
+            slider.valueProperty().addListener(new InvalidationListener() {
+                @Override
+                public void invalidated(Observable observable) {
+                    mediaPlayer.setVolume(slider.getValue()/100);
+                    slider.setMin(0.0);
+                }
+            });
+            
+          /*  seekSlider.setMax(mediaPlayer.getTotalDuration().toSeconds());*/
+            mediaPlayer.currentTimeProperty().addListener(new ChangeListener<Duration>(){
+                @Override
+                public void changed(ObservableValue<? extends Duration> observable, Duration oldValue, Duration newValue){
+                    
+                    seekSlider.setMin(0.0);
+                    seekSlider.setValue(0.0);
+                    seekSlider.setMax(mediaPlayer.getTotalDuration().toSeconds());
+                    
+                    
+                    seekSlider.setValue(newValue.toSeconds());
+                    
+                
+                }
+            });
+                
+                seekSlider.setOnMousePressed(new EventHandler<MouseEvent>() {
+                @Override
+                public void handle(MouseEvent mouseEvent) {
+                    mediaPlayer.seek(Duration.seconds(seekSlider.getValue()));
+                    
+                }
+            });
+                mediaPlayer.play();
+                status=Status.PLAYING;
+                break; 
            
-        
-    }
+}
+    }}
     @FXML
     private void pauseVideo(ActionEvent event){
         mediaPlayer.pause();
@@ -138,9 +198,11 @@ public class FXMLDocumentController implements Initializable {
     private void slowerVideo(ActionEvent event){
         mediaPlayer.setRate(0.5);
     }
+    Stage stage;
     @FXML
     void exitVideo(ActionEvent event) {
-
+        stage=(Stage)((Button)event.getSource()).getScene().getWindow();
+        stage.close();
     }
     
     
